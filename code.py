@@ -1,121 +1,139 @@
-# import necessary libraries
-from sklearn.datasets import load_iris
+"""
+Fuzzy C-Means Clustering on Iris Dataset
+This script implements a Fuzzy C-Means (FCM) clustering algorithm from scratch
+and evaluates it using the Calinski-Harabasz score.
+"""
+
+# Import necessary libraries
 import numpy as np
-import math
 import random
+import math
 import matplotlib.pyplot as plt
+from sklearn.datasets import load_iris
 from sklearn.metrics import calinski_harabasz_score
 
-# load dataset
+# Load Iris dataset
 iris = load_iris()
-X = iris.data
-y = iris.target
+X = iris.data  # Features
+y = iris.target  # True labels (not used in clustering)
 
+def euclidean_distance(point1, point2):
+    """
+    Compute the Euclidean distance between two points in 4D space.
+    
+    Args:
+        point1 (list or np.array): Coordinates of the first point.
+        point2 (list or np.array): Coordinates of the second point.
+        
+    Returns:
+        float: Euclidean distance between the points.
+    """
+    return math.sqrt(sum((p1 - p2) ** 2 for p1, p2 in zip(point1, point2)))
 
-# define distance function
-def distance(point1, point2):
-    dis = ((point1[0] - point2[0]) ** 2 + (point1[1] - point2[1]) ** 2 + (point1[2] - point2[2]) ** 2 + (
-                point1[3] - point2[3]) ** 2) ** 0.5
+def initialize_membership_matrix(n_samples, n_clusters):
+    """
+    Initialize membership matrix with normalized random values.
+    
+    Args:
+        n_samples (int): Number of data points.
+        n_clusters (int): Number of clusters.
+        
+    Returns:
+        list: Membership value matrix (n_samples x n_clusters)
+    """
+    membership_matrix = []
+    for _ in range(n_samples):
+        random_values = [random.random() for _ in range(n_clusters)]
+        total = sum(random_values)
+        normalized_values = [val / total for val in random_values]
+        membership_matrix.append(normalized_values)
+    return membership_matrix
 
-    return dis
-
-
-# define initial Membership Matrix (MvM) by normalized random values
-def initial_membership_values(n_cluster):
-
-    memeber_value_matrix=list()
-
-    for i in range(150):
-        random_list=[random.random() for x in range(n_cluster)]
-        summation=sum(random_list)
-        for i in range(len(random_list)):
-            random_list[i]=random_list[i]/summation
-        memeber_value_matrix.append(random_list)
-    return memeber_value_matrix
-
-
-
-# define center of clusters (CC) & membership matrix update function
-def fuzzy_c_mean(memeber_value_matrix, n_cluster, m):
-
-# Find Center of Clusters (CC)
-    center_matrix = {}
-
-    for j in range(n_cluster):
+def fuzzy_c_means(membership_matrix, n_clusters, m):
+    """
+    Perform one iteration of Fuzzy C-Means:
+    1. Calculate cluster centers
+    2. Update membership matrix
+    
+    Args:
+        membership_matrix (list): Current membership values.
+        n_clusters (int): Number of clusters.
+        m (float): Fuzziness coefficient (m > 1)
+        
+    Returns:
+        tuple: Updated membership matrix and cluster centers
+    """
+    n_samples = len(membership_matrix)
+    n_features = len(X[0])
+    
+    # Calculate cluster centers
+    centers = {}
+    for j in range(n_clusters):
         center = []
-        for k in range(4):
+        for k in range(n_features):
+            numerator = sum((membership_matrix[i][j] ** m) * X[i][k] for i in range(n_samples))
+            denominator = sum(membership_matrix[i][j] ** m for i in range(n_samples))
+            center.append(numerator / denominator)
+        centers[j] = center
 
-            b = 0
-            for i in range(150):
-                b += (memeber_value_matrix[i][j] ** m) * (X[i][k])
-            a = 0
-            for i in range(150):
-                a += memeber_value_matrix[i][j] ** m
-            center.append(b / a)
-        center_matrix[j] = center
+    # Update membership values
+    for i in range(n_samples):
+        distances = [euclidean_distance(centers[j], X[i]) for j in range(n_clusters)]
+        for j in range(n_clusters):
+            membership_matrix[i][j] = 1 / sum((distances[j] / distances[k]) ** (2 / (m - 1)) for k in range(n_clusters))
+    
+    return membership_matrix, centers
 
-# Update the Membership values Matrix (MvM)
-    for i in range(150):
-        distances = list()
-        for j in range(n_cluster):
-            distances.append(distance(center_matrix[j], X[i]))
-        for j in range(n_cluster):
-            sigma = 0
-            for k in range(n_cluster):
-                sigma = sigma + (math.pow(distances[j] / distances[k], 2 / (m - 1)))
-            memeber_value_matrix[i][j] = (1 / sigma)
+# -------------------
+# Clustering Settings
+# -------------------
+n_clusters = 3
+m = 2  # Fuzziness coefficient
+max_iterations = 100
+n_samples = X.shape[0]
 
-    return memeber_value_matrix, center_matrix
+# Initialize membership matrix
+membership_matrix = initialize_membership_matrix(n_samples, n_clusters)
 
+# Run Fuzzy C-Means iterations
+for _ in range(max_iterations):
+    membership_matrix, centers = fuzzy_c_means(membership_matrix, n_clusters, m)
 
-# Start Clustering
-n_cluster = 3 # number of Clusters
-m = 2 # Constant Coefficient in Fuzzy_C_Mean
-iteration = 100   # max iteration
+print("Final cluster centers:", centers)
 
-#initial MvM
-matrix = initial_membership_values(n_cluster) #initial MvM
+# Calculate distance sums for evaluation
+distance_sums = []
+for i in range(n_samples):
+    distance_sums.append([euclidean_distance(X[i], centers[j]) for j in range(n_clusters)])
+total_distance_sum = sum(sum(dist) for dist in distance_sums)
 
-for o in range(iteration):
-    matrix, center = fuzzy_c_mean(matrix, n_cluster, m)
-print(" final clusters center  : ", center)
+# Assign labels based on minimum distance to cluster centers
+labels = [np.argmin(dist) for dist in distance_sums]
 
-# calculate summation of maximum distance of points from CC
-dis_sum = 0
-dis_from_centers = list()
-for i in range(150):
-    dis = list()
-    for j in range(n_cluster):
-        dis.append(distance(X[i], center[j]))
-    dis_from_centers.append(dis)
-    dis_sum += sum(dis)
+# Evaluate clustering performance
+chs_score = calinski_harabasz_score(X, labels)
+print("Calinski-Harabasz Score:", chs_score)
+print("Total distance sum:", total_distance_sum)
 
-# creat label of minimum distance of points from CC
-labels = list()
-for i in range(150):
-    labels.append(np.argmin(dis_from_centers[i]))
-
-# evaluate model
-chs = calinski_harabasz_score(X, labels)
-
-# Print the results
-print("Score is : " ,chs)
-print("distance summation is : " ,dis_sum)
-
-
-# Plot the results
-fig1 = plt.figure()
-plt.scatter (X[:,0],X[:,1], c=labels)
+# -------------------
+# Plotting results
+# -------------------
+# Plot Sepal dimensions
+plt.figure()
+plt.scatter(X[:, 0], X[:, 1], c=labels, cmap='viridis')
 plt.xlabel("Sepal Length")
 plt.ylabel("Sepal Width")
-for i in range(n_cluster):
-    plt.scatter(center[i][0], center[i][1], s=80, color="r", marker="D")
+for i in range(n_clusters):
+    plt.scatter(centers[i][0], centers[i][1], s=80, color="red", marker="D")
+plt.title("Fuzzy C-Means Clustering (Sepal)")
 
-fig2 = plt.figure()
-plt.scatter (X[:,2],X[:,3], c=labels)
+# Plot Petal dimensions
+plt.figure()
+plt.scatter(X[:, 2], X[:, 3], c=labels, cmap='viridis')
 plt.xlabel("Petal Length")
 plt.ylabel("Petal Width")
-for i in range(n_cluster):
-    plt.scatter(center[i][2], center[i][3], s=80, color="r", marker="D")
+for i in range(n_clusters):
+    plt.scatter(centers[i][2], centers[i][3], s=80, color="red", marker="D")
+plt.title("Fuzzy C-Means Clustering (Petal)")
 
 plt.show()

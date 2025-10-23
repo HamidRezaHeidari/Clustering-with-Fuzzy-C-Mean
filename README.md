@@ -21,8 +21,8 @@ Our goal is to cluster the samples into different groups based on these features
 <br/>
 
 <p align="center">
-  <img title="Fig1" height="250" src="images/1.png">
-  <img title="Fig2" height="250" src="images/2.png">
+  <img title="Fig1" height="300" src="images/1.png">
+  <img title="Fig2" height="300" src="images/2.png">
   <br />
 </p>
 

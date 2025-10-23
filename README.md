@@ -13,8 +13,8 @@ The implementation is fully modular and easy to adapt for other datasets or expe
 - Performance evaluation using Calinski-Harabasz score
 - Clean, well-documented, and modular code for easy adaptation
 
-## 🧭About Reinforcement Learning
-Reinforcement Learning (RL) is a type of machine learning where an agent learns to make decisions by interacting with an environment. The agent receives rewards for good actions and penalties for bad ones, gradually learning an optimal policy to achieve a goal. In this project, RL trains the robot arm to reach the target efficiently and accurately.
+## 🍀About Iris
+The Iris dataset is a classic dataset in machine learning and consists of 150 samples of iris flowers, each with four features (sepal length, sepal width, petal length,and petal width) and a target label indicating the species of iris. Our goal is to cluster the samples into different groups based on these features.
 <br/>
 ✨Star if you find it useful
 

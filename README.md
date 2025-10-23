@@ -5,7 +5,7 @@ The implementation is fully modular and easy to adapt for other datasets or expe
 
 ---
 
-## Features
+## ✨Features
 
 - Fuzzy C-Means algorithm implemented from scratch in Python
 - Soft clustering with membership values
@@ -15,8 +15,9 @@ The implementation is fully modular and easy to adapt for other datasets or expe
 
 The Iris dataset is a classic dataset in machine learning and consists of 150 samples of iris flowers, each with four features (sepal length, sepal width, petal length,and petal width) and a target label indicating the species of iris.
 Our goal is to cluster the samples into different groups based on these features.
+star if you find it useful
+
 <br/>
-## star if you like it ✨
 
 <p align="center">
   <img title="Fig1" height="410" src="images/1.png">
